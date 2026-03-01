@@ -1,2 +1,41 @@
-# Wildfire-Chatbot
-Wildfires have continued to be a significant threat to communities globally. AI assistants like Alexa provide weather forecasts, and a wildfire AI chatbot could similarly assess wildfire risk, detect high-risk areas, and offer emergency guidance. This research develops a personalized chatbot for location-specific wildfire risk classification that enhances community preparedness, empowers residents with tailored safety measures and prevention tips, and supports first responders during emergencies using AI. The chatbot integrates two distinct yet complementary functionalities triggered by the nature of the user's query. A zero-shot classifier determines the user’s intent. First, a custom machine learning (ML) model classifies area-specific fire risk and notifies a user of this risk, as well as alerts them of any nearby wildfires using real-time satellite (NASA FIRMS) and meteorological (NOAA) data, and any active fire alerts issued using the weather.gov API. Models like Logistic Regression and Gradient Boosting are considered for optimal accuracy. The model selected was a fine-tuned Gradient Boosting Classification model.  Second, the chatbot leverages Retrieval-Augmented Generation (RAG) and Natural Language Processing (NLP) to respond to general wildfire-related inquiries, focusing on risk awareness, prevention, and preparedness. It accesses a vector database populated with wildfire data from sources such as FEMA’s Wildland-Urban Interface Fire program and the New Jersey Wildfire Risk Assessment Portal. A RAG pipeline built using Facebook AI Similarity Search (FAISS) for efficient vector search, LangChain for managing conversations and system integration, and a large language model enables the chatbot to deliver informed answers on topics like defensible space, prescribed burns, and emergency supplies.  The application is built in Python, and the web-based conversational interface was developed using Streamlit. The system is also developed with a commitment to human-centered AI principles and ethical AI design. 
+# Wildfire AI Assistant
+An intelligent, multi-modal chatbot designed to provide real-time wildfire risk assessment, safety guidance, and general information using RAG (Retrieval-Augmented Generation) and machine learning. This assistant enhances community preparedness by empowering residents with tailored safety measures and supporting first responders during emergencies.
+
+🚀 Features
+1. Smart Intent Classification
+Uses a zero-shot classifier (facebook/bart-large-mnli) to determine the user's intent, distinguishing between general inquiries and specific location-based risk predictions.
+
+2. Retrieval-Augmented Generation (RAG)
+Context-Aware Answers: Delivers informed answers on topics like defensible space, prescribed burns, and emergency supplies using a vector database.
+Data Sources: Populated with wildfire data from FEMA’s Wildland-Urban Interface Fire program, the New Jersey Wildfire Risk Assessment Portal, and other official safety documents.
+Tech Stack: LangChain for conversation management, FAISS (Facebook AI Similarity Search) for efficient vector search, and Mistral-7B-Instruct hosted via Hugging Face.
+3. Area-Specific Risk Prediction
+When a user mentions a location, the system performs a multi-step analysis:
+
+NER (Named Entity Recognition): Extracts location names from text.
+Real-Time Data Integration: Integrates meteorological data from NOAA and active alerts from the weather.gov API.
+NASA FIRMS Integration: Checks for NRT (Near Real-Time) satellite thermal anomalies (active fire points) within a 20-mile radius.
+Custom ML Model: While Logistic Regression and Gradient Boosting were considered, the system utilizes a fine-tuned Gradient Boosting Classification model to predict risk levels.
+4. Interactive Streamlit UI
+A web-based conversational interface built with Python and Streamlit, maintaining session history and presenting data through intuitive tables and markdown.
+
+🛠️ Project Structure
+app.py: The main Streamlit application hub.
+RAG_LLM.py: Document ingestion and LangChain QA logic.
+custom_model_weather_classification.py: Training and prediction logic for the Gradient Boosting model.
+thermal_anomaly.py: NASA FIRMS API integration and distance calculations.
+weather_data.py & weather_api_alerts.py: Interfaces for meteorological and alert data.
+⚖️ Ethical AI & Principles
+The system is developed with a commitment to human-centered AI principles and ethical AI design, ensuring that safety information is grounded in verified context and designed to assist rather than replace emergency services.
+
+🔧 Setup & Requirements
+Environment Variables
+The app expects the following keys in your Google Colab Userdata:
+
+token1studio: Your Hugging Face Hub token.
+NASAfirms: Your NASA FIRMS API key.
+ngrok_auth: Your Ngrok authentication token.
+📖 How to Run
+Install dependencies listed in the notebook.
+Execute all module cells to generate the required .py files.
+Run the Streamlit execution cell to launch the public interface via Ngrok.
