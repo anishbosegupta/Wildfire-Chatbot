@@ -1,75 +1,196 @@
-# Wildfire AI Assistant
-An intelligent, multi-modal chatbot designed to provide real-time wildfire risk assessment, safety guidance, and general information using RAG (Retrieval-Augmented Generation) and machine learning. This assistant enhances community preparedness by empowering residents with tailored safety measures and supporting first responders during emergencies.
+# 🔥 Wildfire AI Assistant
 
-🚀 Features
-1. Smart Intent Classification
-Uses a zero-shot classifier (facebook/bart-large-mnli) to determine the user's intent, distinguishing between general inquiries and specific location-based risk predictions.
-2. Retrieval-Augmented Generation (RAG)
-   * Context-Aware Answers: Delivers informed answers on topics like defensible space, prescribed burns, and emergency supplies using a vector database.
-   * Data Sources: Populated with wildfire data from FEMA’s Wildland-Urban Interface Fire program, the New Jersey Wildfire Risk Assessment Portal, and other official safety documents.
-   * Tech Stack: LangChain for conversation management, FAISS (Facebook AI Similarity Search) for efficient vector search, and Mistral-7B-Instruct hosted via Hugging Face.
-3. Area-Specific Risk Prediction
-When a user mentions a location, the system performs a multi-step analysis:
+An intelligent, multi-modal chatbot for real-time wildfire risk assessment, safety guidance, and community preparedness. The system combines Retrieval-Augmented Generation (RAG), a custom machine learning model, and live external data feeds to deliver location-aware, grounded responses to residents and first responders.
 
-   * NER (Named Entity Recognition): Extracts location names from text.
-   * Real-Time Data Integration: Integrates meteorological data from NOAA and active alerts from the weather.gov API.
-   * NASA FIRMS Integration: Checks for NRT (Near Real-Time) satellite thermal anomalies (active fire points) within a 20-mile radius.
-   * Custom ML Model: While Logistic Regression and Gradient Boosting were considered, the system utilizes a fine-tuned Gradient Boosting Classification model to predict risk levels.
-4. Interactive Streamlit UI
-A web-based conversational interface built with Python and Streamlit, maintaining session history and presenting data through intuitive tables and markdown.
+---
 
-🛠️ Project Structure
-   * app.py: The main Streamlit application hub.
-   * RAG_LLM.py: Document ingestion and LangChain QA logic.
-   * custom_model_weather_classification.py: Training and prediction logic for the Gradient Boosting model.
-   * thermal_anomaly.py: NASA FIRMS API integration and distance calculations.
-   * weather_data.py & weather_api_alerts.py: Interfaces for meteorological and alert data.
+## 📁 Repository Structure
 
-⚖️ Ethical AI & Principles
-The system is developed with a commitment to human-centered AI principles and ethical AI design, ensuring that safety information is grounded in verified context and designed to assist rather than replace emergency services.
+```
+Wildfire-Chatbot/
+├── Wildfire_AI_Chatbot.ipynb        # Main chatbot system (RAG + ML + Streamlit UI)
+└── Wildfire_Model_Evaluation.ipynb  # Evaluation pipeline (ROUGE, BERTScore, LLM-as-Judge)
+```
 
-🔧 Setup & Requirements
+---
 
-Environment Variables
+## 🧠 Wildfire_AI_Chatbot.ipynb
 
-The app expects the following keys in the Google Colab Userdata:
+### Overview
 
-  * token1studio: Your Hugging Face Hub token.
-  * NASAfirms: Your NASA FIRMS API key.
-  * ngrok_auth: Your Ngrok authentication token.
+This notebook builds and launches the full Wildfire AI Assistant pipeline. It handles everything from document ingestion to a live Streamlit web interface, combining RAG-based Q&A with a custom ML risk classifier and real-time data integrations.
 
-📖 How to Run
-1. Install dependencies listed in the notebook.
-2. Execute all module cells to generate the required .py files.
-3. Run the Streamlit execution cell to launch the public interface via Ngrok.
+### Architecture
 
+```
+User Input
+    │
+    ▼
+Intent Classification (facebook/bart-large-mnli)
+    │
+    ├─── General Query ──► RAG Pipeline (LangChain + FAISS + Mistral-7B)
+    │
+    └─── Location Query ──► NER → Weather API (NOAA) + Fire Data (NASA FIRMS)
+                                        │
+                                        ▼
+                            Gradient Boosting Risk Classifier
+                                        │
+                                        ▼
+                              Risk Level Output (Low / Medium / High)
+```
 
-📊 Model Evaluation (Wildfire_Model_Evaluation.ipynb)
+### Features
 
-**What it does:**
-Evaluates RAG (Retrieval-Augmented Generation) model outputs using three complementary evaluation metrics:
-- **ROUGE-L** - Measures longest common subsequence overlap between predictions and references
-- **BERTScore** - Measures semantic similarity using contextual embeddings (F1 scores)
-- **LLM-as-Judge** - Uses Llama-2-7B model to provide expert evaluation scores (1-5 scale)
+**Smart Intent Classification**
+Uses `facebook/bart-large-mnli` (zero-shot) to route each user message to either the RAG pipeline (general knowledge) or the location-based risk prediction pipeline.
 
-**How to Run:**
-1. Ensure dependencies are installed (see below)
-2. Prepare a CSV file (qa_judge_inputs.csv) with columns: context, question, prediction, reference
-3. For LLM-as-Judge evaluation:
-   - Login to Hugging Face: `huggingface-cli login`
-   - Configure git credentials: `git config --global credential.helper store`
-   - Note: Requires GPU (Colab T4 GPU recommended)
-4. Execute all cells in the notebook to generate evaluation metrics and visualizations
+**Retrieval-Augmented Generation (RAG)**
+- Answers questions on topics like defensible space, evacuation planning, prescribed burns, and emergency supply kits
+- Knowledge base sourced from FEMA's Wildland-Urban Interface Fire program, the New Jersey Wildfire Risk Assessment Portal, and official safety documents
+- Built with LangChain (conversation management), FAISS (vector similarity search), and Mistral-7B-Instruct (via Hugging Face)
 
-**Dependencies:**
-- evaluate==0.4.0
-- rouge_score
-- bert_score
-- transformers
-- pandas
-- matplotlib
-- bitsandbytes==0.39.1
-- torch (GPU support required for LLM-as-Judge)
+**Location-Based Risk Prediction**
+When a user mentions a location, the system runs a multi-step pipeline:
+1. **NER** — Extracts place names from the message
+2. **NOAA Weather API** — Fetches current meteorological conditions
+3. **weather.gov Alerts API** — Retrieves active fire weather alerts
+4. **NASA FIRMS** — Checks for satellite-detected thermal anomalies within a 20-mile radius
+5. **Gradient Boosting Classifier** — Predicts fire risk level (Low / Medium / High) from combined features
 
-**Project Workflow Integration:**
-The notebook fits into the **validation and quality assurance phase** of the pipeline. It runs **after** the main RAG system and custom ML model have generated predictions. It helps identify model performance bottlenecks and areas for improvement, with outputs including comparison metrics and visualizations to guide model optimization.
+**Interactive Streamlit UI**
+A web-based chat interface served via Ngrok, with full session history, markdown rendering, and tabular data display.
+
+### Module Breakdown
+
+| File | Purpose |
+|---|---|
+| `app.py` | Main Streamlit application entry point |
+| `RAG_LLM.py` | Document ingestion and LangChain QA chain |
+| `custom_model_weather_classification.py` | Gradient Boosting model training and inference |
+| `thermal_anomaly.py` | NASA FIRMS integration and distance calculations |
+| `weather_data.py` | NOAA meteorological data interface |
+| `weather_api_alerts.py` | weather.gov active alert integration |
+
+> These `.py` files are generated by executing the module cells in the notebook.
+
+### Prerequisites
+
+**API Keys** (stored in Google Colab Userdata):
+
+| Key Name | Service |
+|---|---|
+| `token1studio` | Hugging Face Hub |
+| `NASAfirms` | NASA FIRMS |
+| `ngrok_auth` | Ngrok |
+
+### Setup & Running
+
+1. Open `Wildfire_AI_Chatbot.ipynb` in Google Colab (GPU runtime recommended)
+2. Install dependencies from the first cell
+3. Add your API keys to Colab's Userdata secrets
+4. Run all cells in order — module cells generate the `.py` files
+5. Execute the final Streamlit cell to launch the public URL via Ngrok
+
+### Tech Stack
+
+| Component | Technology |
+|---|---|
+| LLM | Mistral-7B-Instruct (Hugging Face) |
+| Intent Classification | facebook/bart-large-mnli |
+| Vector Store | FAISS |
+| Orchestration | LangChain |
+| Risk Model | Gradient Boosting Classifier |
+| Weather Data | NOAA / weather.gov APIs |
+| Fire Detection | NASA FIRMS (NRT Satellite) |
+| UI | Streamlit + Ngrok |
+
+---
+
+## 📊 Wildfire_Model_Evaluation.ipynb
+
+### Overview
+
+This notebook provides a structured evaluation pipeline for the RAG system's output quality. It runs three complementary metrics — lexical overlap, semantic similarity, and expert LLM judgment — and produces comparison visualizations to guide model improvement.
+
+### Evaluation Metrics
+
+| Metric | What It Measures |
+|---|---|
+| **ROUGE-L** | Longest common subsequence overlap between generated and reference answers |
+| **BERTScore** | Semantic similarity using contextual embeddings (reports F1) |
+| **LLM-as-Judge** | Expert quality scores (1–5 scale) from Llama-2-7B |
+
+Each metric captures a different dimension of quality. ROUGE-L is sensitive to exact wording, BERTScore accounts for paraphrasing, and LLM-as-Judge evaluates overall coherence and relevance from an expert perspective.
+
+### Input Format
+
+Prepare a CSV file named `qa_judge_inputs.csv` with the following columns:
+
+| Column | Description |
+|---|---|
+| `context` | Retrieved source passages used to generate the answer |
+| `question` | The original user question |
+| `prediction` | The model's generated answer |
+| `reference` | The ground-truth reference answer |
+
+### Prerequisites
+
+```bash
+pip install evaluate==0.4.0 rouge_score bert_score transformers pandas matplotlib bitsandbytes==0.39.1
+```
+
+> **Note:** LLM-as-Judge requires GPU. Google Colab with a T4 GPU is recommended.
+> You must also authenticate with Hugging Face to access Llama-2-7B:
+> ```bash
+> huggingface-cli login
+> git config --global credential.helper store
+> ```
+
+### Setup & Running
+
+1. Open `Wildfire_Model_Evaluation.ipynb` in Google Colab (T4 GPU runtime)
+2. Install dependencies listed above
+3. Upload `qa_judge_inputs.csv` to your Colab session
+4. Authenticate with Hugging Face
+5. Run all cells to generate metrics and visualizations
+
+### Outputs
+
+- Per-sample ROUGE-L, BERTScore F1, and LLM-as-Judge scores
+- Aggregate comparison metrics across all evaluation dimensions
+- Visualizations for identifying performance bottlenecks
+
+### Where This Fits in the Pipeline
+
+```
+RAG System + ML Model
+        │
+        ▼
+  Generate Predictions
+        │
+        ▼
+  qa_judge_inputs.csv
+        │
+        ▼
+  Wildfire_Model_Evaluation.ipynb
+        │
+        ▼
+  Metrics + Visualizations → Model Optimization
+```
+
+---
+
+## ⚖️ Ethical AI Principles
+
+This system is built on human-centered AI design principles:
+
+- Responses are grounded in verified, official sources — not hallucinated
+- The assistant is designed to support, not replace, emergency services
+- Risk predictions are clearly labeled and paired with source data so users can make informed decisions
+- Safety-critical information is scoped to public guidance, not operational incident command
+
+---
+
+## 📄 License
+
+Please refer to the repository's license file for terms of use.
